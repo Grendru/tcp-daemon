@@ -9,11 +9,27 @@
 #include <fcntl.h>
 #include <sys/poll.h>
 #include <fstream>  
+#include <signal.h>
+#include <wait.h>
 
 #define PORT 3325
 #define MAX_CLIENTS 128
 
 using namespace std;
+bool terminate_ = 0;
+bool sighup = 0;
+
+void signal_handler(int sig)
+{   
+    switch(sig)
+	{
+		case SIGHUP:
+			sighup = 1;
+		case SIGTERM:
+            terminate_ = 1;
+			break;
+	}
+}
 
 int write_to_file(char filename[], char data[], int datalen)
 {
@@ -22,6 +38,7 @@ int write_to_file(char filename[], char data[], int datalen)
     outfile.close();
     return 0;
 }
+
 int daemon()
 {
     int listener;
@@ -33,7 +50,11 @@ int daemon()
         perror("socket");
         exit(1);
     }
-    
+
+    int enable = 1;
+    if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+        perror("setsockopt(SO_REUSEADDR) failed");
+
     fcntl(listener, F_SETFL, O_NONBLOCK);
     
     addr.sin_family = AF_INET;
@@ -45,13 +66,24 @@ int daemon()
         exit(2);
     }
     listen(listener, 1);
+
+    if (signal(SIGTERM, signal_handler) == SIG_ERR)
+    {
+        exit(EXIT_FAILURE);
+    }
+
+    if (signal(SIGHUP, signal_handler) == SIG_ERR)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     struct pollfd fd[MAX_CLIENTS];
     int numclients = 0; 
     fd[0].fd = listener;
     fd[0].events = POLLIN;
     for (int i = 1; i < MAX_CLIENTS; i++)
         fd[i].fd = -1;
-    while(1)
+    while(!terminate_)
     {
         int ret = poll( fd, numclients + 1, -1 );
         if ( ret == -1 )
@@ -121,8 +153,24 @@ int daemon()
 
         }
     }
+    if (terminate_)
+    {
+        for (int i = 0; i < MAX_CLIENTS; i++)
+        {
+            if (fd[i].fd != -1)
+                    close(fd[i].fd);
+        }
+        if (sighup)
+        {
+            terminate_ = 0;
+            sighup = 0;
+            daemon();
+        }
+        
+    }
     return 0;
 }
+
 int main(int argc, char *argv[])
 {
     struct stat   buffer;
@@ -155,7 +203,6 @@ int main(int argc, char *argv[])
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    
     daemon();
     return 0;
 }
