@@ -27,7 +27,7 @@ char* readfile(char path_to_file[], int* datalen)
         is.read (buffer,length);
 
         if (!is)
-            printf("error: only %s could be read\n", is.gcount());
+            printf("error: only %ld could be read\n", is.gcount());
         is.close();
         *datalen = length;
         return buffer;

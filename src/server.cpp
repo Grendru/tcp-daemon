@@ -21,7 +21,7 @@ int write_to_file(char filename[], char data[], int datalen)
     outfile.close();
     return 0;
 }
-int main()
+int daemon()
 {
     int listener;
     struct sockaddr_in addr;
@@ -120,4 +120,9 @@ int main()
 
         }
     }
+    return 0;
+}
+int main()
+{
+    daemon();
 }

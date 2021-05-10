@@ -1,10 +1,16 @@
 all: client server
 		
 
-client:
-	g++ client.cpp -o client
+client: createfolder
+	g++ src/client.cpp -o build/client
 
-server:
-	g++ server.cpp -o server
+server: createfolder
+	g++ src/server.cpp -o build/server
 
-.PHONY: all client server
+createfolder:
+	mkdir -p build 
+
+clean:
+	rm -R build
+
+.PHONY: all client server clean
