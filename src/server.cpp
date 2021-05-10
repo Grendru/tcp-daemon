@@ -39,7 +39,7 @@ int write_to_file(char filename[], char data[], int datalen)
     return 0;
 }
 
-int daemon()
+int daemon(int port)
 {
     int listener;
     struct sockaddr_in addr;
@@ -58,7 +58,7 @@ int daemon()
     fcntl(listener, F_SETFL, O_NONBLOCK);
     
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
+    addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
     if(bind(listener, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -164,7 +164,7 @@ int daemon()
         {
             terminate_ = 0;
             sighup = 0;
-            daemon();
+            daemon(port);
         }
         
     }
@@ -174,16 +174,23 @@ int daemon()
 int main(int argc, char *argv[])
 {
     struct stat   buffer;
-    if (argc <= 1)
+    if (argc <= 2)
     {
-        printf("Use \"./server <absolute_path_to_folder>\"\n");
+        printf("Use \"./server <port> <absolute_path_to_folder>\"\n");
         return(0);
     }
-    else if (stat (argv[1], &buffer) != 0)
+    else if (stat (argv[2], &buffer) != 0)
     {
         printf("Folder not exists\n");
         return(0);
     }
+    else if (atoi(argv[1]) < 0 || atoi(argv[1]) > 65535 )
+    {
+        printf("invalid port\n");
+        return 0;
+    }
+
+    int port = atoi(argv[1]);
     pid_t parpid, sid;
     
     parpid = fork(); 
@@ -197,12 +204,12 @@ int main(int argc, char *argv[])
     if(sid < 0) {
         exit(1);
     }
-    if((chdir(argv[1])) < 0) {
+    if((chdir(argv[2])) < 0) {
         exit(1);
     }
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    daemon();
+    daemon(port);
     return 0;
 }

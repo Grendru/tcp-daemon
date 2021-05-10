@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -36,7 +37,7 @@ char* readfile(char path_to_file[], int* datalen)
         printf("File not open\n");
     return NULL;
 }
-int get_sock()
+int get_sock(int ip, char *ipchar, int port)
 {
     int sock;
     struct sockaddr_in addr;
@@ -49,8 +50,8 @@ int get_sock()
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = ip;
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         perror("connect");
@@ -76,20 +77,26 @@ int main(int argc, char* argv[])
 {
     char *data;
     int datalen;
-    if (argc >= 2)
+    int ip, port;
+    if (argc >= 4)
     {
-        if ((data = readfile(argv[1], &datalen)) == NULL )
+        if ((data = readfile(argv[3], &datalen)) == NULL )
             return 0;
-
+        port=atoi(argv[2]);
+        if ((port < 0 || port > 65535 ) || inet_pton(AF_INET, argv[1], &ip) != 1)
+        {
+            printf("Invalid ip or port\n");
+            return 1;
+        }
     }
     else
     {
-        printf("Use \"./client <path_to_file>\"\n");
+        printf("Use \"./client <ip> <port> <path_to_file>\"\n");
         return 0;
     }
-    int sock = get_sock();
+    int sock = get_sock(ip,argv[1], port);
     char *filename, *cur_str;
-    cur_str = filename = strtok(argv[1], "/\\");
+    cur_str = filename = strtok(argv[3], "/\\");
     while (cur_str != NULL)
     {
         filename = cur_str;
