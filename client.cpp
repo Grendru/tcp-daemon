@@ -19,7 +19,6 @@ char* readfile(char path_to_file[], int* datalen)
 
     std::ifstream is (path_to_file, std::ifstream::binary);
     if (is) {
-        // get length of file:
         is.seekg (0, is.end);
         int length = is.tellg();
         is.seekg (0, is.beg);
@@ -28,7 +27,7 @@ char* readfile(char path_to_file[], int* datalen)
         is.read (buffer,length);
 
         if (!is)
-            std::cout << "error: only " << is.gcount() << " could be read";
+            printf("error: only %s could be read\n", is.gcount());
         is.close();
         *datalen = length;
         return buffer;
@@ -79,8 +78,9 @@ int main(int argc, char* argv[])
     int datalen;
     if (argc >= 2)
     {
-        data = readfile(argv[1], &datalen);
-        //printf("%s\n%d\n", data, datalen);
+        if ((data = readfile(argv[1], &datalen)) == NULL )
+            return 0;
+
     }
     else
     {

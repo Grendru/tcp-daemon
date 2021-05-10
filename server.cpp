@@ -10,13 +10,14 @@
 #include <fstream>  
 
 #define PORT 3325
+#define MAX_CLIENTS 128
 
 using namespace std;
 
 int write_to_file(char filename[], char data[], int datalen)
 {
-    std::ofstream outfile (filename,std::ofstream::binary);
-    outfile.write (data, datalen);
+    std::ofstream outfile(filename,std::ofstream::binary);
+    outfile.write(data, datalen);
     outfile.close();
     return 0;
 }
@@ -24,8 +25,6 @@ int main()
 {
     int listener;
     struct sockaddr_in addr;
-    char buf[1024];
-    int bytes_read;
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
     if(listener < 0)
@@ -45,11 +44,11 @@ int main()
         exit(2);
     }
     listen(listener, 1);
-    struct pollfd fd[100];
+    struct pollfd fd[MAX_CLIENTS];
     int numclients = 0; 
     fd[0].fd = listener;
     fd[0].events = POLLIN;
-    for (int i = 1; i < 100; i++)
+    for (int i = 1; i < MAX_CLIENTS; i++)
         fd[i].fd = -1;
     while(1)
     {
@@ -76,17 +75,16 @@ int main()
                         exit(3);
                     }
                     int i;
-                    for(i = 1; i < 100; i++)
+                    for(i = 1; i < MAX_CLIENTS; i++)
                     {
                         if(fd[i].fd < 0)
                         {
-                            printf("i: %d, sock: %d\n", i, sock);
                             fd[i].fd = sock;
                             fd[i].events = POLLIN;
                             break;
                         }
                     }
-                    if(i == 100)
+                    if(i == MAX_CLIENTS)
                     {
                         continue;
                     }
