@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        printf("./client <path_to_file>\n");
+        printf("Use \"./client <path_to_file>\"\n");
         return 0;
     }
     int sock = get_sock();

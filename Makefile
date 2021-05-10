@@ -11,6 +11,6 @@ createfolder:
 	mkdir -p build 
 
 clean:
-	rm -R build
+	rm -R build || true
 
 .PHONY: all client server clean

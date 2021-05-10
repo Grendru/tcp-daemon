@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+ #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <fcntl.h>
@@ -122,7 +123,39 @@ int daemon()
     }
     return 0;
 }
-int main()
+int main(int argc, char *argv[])
 {
+    struct stat   buffer;
+    if (argc <= 1)
+    {
+        printf("Use \"./server <absolute_path_to_folder>\"\n");
+        return(0);
+    }
+    else if (stat (argv[1], &buffer) != 0)
+    {
+        printf("Folder not exists\n");
+        return(0);
+    }
+    pid_t parpid, sid;
+    
+    parpid = fork(); 
+    if(parpid < 0) {
+        exit(1);
+    } else if(parpid != 0) {
+        exit(0);
+    } 
+    umask(0);
+    sid = setsid();
+    if(sid < 0) {
+        exit(1);
+    }
+    if((chdir(argv[1])) < 0) {
+        exit(1);
+    }
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    
     daemon();
+    return 0;
 }
