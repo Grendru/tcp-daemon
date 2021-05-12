@@ -23,9 +23,7 @@ void signal_handler(int sig)
 {   
     switch(sig)
 	{
-		case SIGHUP:
-			sighup = 1;
-		case SIGTERM:
+		case SIGTERM || SIGHUP:
             terminate_ = 1;
 			break;
 	}
@@ -160,13 +158,6 @@ int daemon(int port)
             if (fd[i].fd != -1)
                     close(fd[i].fd);
         }
-        if (sighup)
-        {
-            terminate_ = 0;
-            sighup = 0;
-            daemon(port);
-        }
-        
     }
     return 0;
 }
